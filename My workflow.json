@@ -1,0 +1,199 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "onboard",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "83b24c41-7b9a-41a6-a01f-7e58fc7ea0d9",
+      "name": "Webhook",
+      "webhookId": "d54dc86f-f296-4f44-ac20-5bdff0f61931"
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# 1. Get the input data\ninput_data = _items[0]['json']['body']\n\n# 2. Logic: Split and Capitalize Name\nfull_name = input_data.get('full_name', '')\nparts = full_name.split()\n\n# Handle First Name\nif len(parts) > 0:\n    first_name = parts[0].capitalize()\nelse:\n    first_name = \"Guest\"\n\n# Handle Last Name\nif len(parts) > 1:\n    last_name = parts[1].capitalize()\nelse:\n    last_name = \"\"\n\n# 3. Logic: Generate ID WITHOUT 'random' library\n# New Logic: USR + First 3 letters of name + Length of email\n# Example: Sarah -> SAR + 16 -> \"USR-SAR16\"\nprefix = first_name[0:3].upper()\nsuffix = str(len(input_data.get('email', '')))\nuser_id = f\"USR-{prefix}{suffix}\"\n\n# 4. Return the Clean Data\nreturn [\n  {\n    \"json\": {\n      \"user_id\": user_id,\n      \"first_name\": first_name,\n      \"last_name\": last_name,\n      \"email\": input_data.get('email')\n    }\n  }\n]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6a142a03-35c8-4159-8b8c-579d889e72d8",
+      "name": "Code in Python (Native) (Beta)"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1zMlBUoRj3ptGBUlpdd1fpFzjzKfX51fVARhcsddRM4Y",
+          "mode": "list",
+          "cachedResultName": "Customer_Onboarding_DB",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zMlBUoRj3ptGBUlpdd1fpFzjzKfX51fVARhcsddRM4Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1zMlBUoRj3ptGBUlpdd1fpFzjzKfX51fVARhcsddRM4Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "user_id": "={{ $json.user_id }}",
+            "first_name": "={{ $json.first_name }}",
+            "last_name": "={{ $json.last_name }}",
+            "email": "={{ $json.email }}",
+            "timestamp": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "user_id",
+              "displayName": "user_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "first_name",
+              "displayName": "first_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_name",
+              "displayName": "last_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7ec93372-6ec3-4bea-9423-6a0836a82bc6",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "qVgRmNh7dNbznLTV",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Welcome to the Platform, {{ $json.first_name }}!",
+        "message": "=Hi {{ $json.first_name }},  Your account has been successfully created! Your User ID is: {{ $json.user_id }}  Welcome aboard!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "1feadb95-4ece-4191-a7c5-829b5fe8fc2e",
+      "name": "Send a message",
+      "webhookId": "de42ec01-056f-4d43-8f21-f9c39e2e345c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "lyNOpXRj8KvVJztc",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code in Python (Native) (Beta)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in Python (Native) (Beta)": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a8b1f839-0cbf-4549-9098-e9030569a966",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d1829306d7b807769949009ce7aafb51ab12f034a057b1e73e1dca4edb0f48de"
+  },
+  "id": "GrQDSn2YZibJqGj7",
+  "tags": []
+}
